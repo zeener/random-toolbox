@@ -1,68 +1,195 @@
-# random-toolbox
+# Random Toolbox
 
-### **A versatile command-line toolkit and API for developers.**
+**A versatile command-line toolkit and API for developers.**
 
-This project provides a set of straightforward, easy-to-use tools that can be accessed both through a command-line interface (CLI) and a **RESTful API**. Whether you need placeholder data for testing, secure credentials for a new project, or strong passwords for user accounts, the `random-toolbox` has you covered.
+Generate random text, secure passwords, and API keys through both CLI and REST API interfaces. Perfect for testing, development, and secure credential generation.
 
------
+---
 
-## **Features**
+## ✨ Features
 
-  * **CLI Tools:** Use the command-line interface for quick, on-the-fly generation of various data types.
-  * **RESTful API:** Integrate the functionality directly into your applications via simple API endpoints.
-  * **Random Text Generator:** Generates various types of placeholder text (paragraphs, sentences, words), perfect for UI/UX mockups and data seeding.
-  * **API Key Generator:** Creates unique, cryptographically secure API keys that can be customized for different applications.
-  * **Password Generator:** Produces strong, random passwords that meet configurable security requirements (e.g., length, character sets).
+- **🖥️ CLI Tools**: Command-line interface for quick data generation
+- **🌐 REST API**: HTTP endpoints for application integration  
+- **📝 Text Generator**: Lorem ipsum text (words, sentences, paragraphs)
+- **🔐 Password Generator**: Cryptographically secure passwords with entropy tracking
+- **🔑 API Key Generator**: Multiple formats (hex, base64, base58) with prefix support
 
------
+---
 
-## **Installation**
+## 🚀 Quick Start
 
-`1. Clone the repository:`
+### Installation
 
+1. **Clone the repository:**
 ```bash
-git clone https://github.com/[your-username]/random-toolbox.git
+git clone https://github.com/your-username/random-toolbox.git
 cd random-toolbox
 ```
 
-`2. Install dependencies (if applicable):`
-
+2. **Set up virtual environment:**
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
------
+### CLI Usage
 
-## **Usage**
+**Generate random text:**
+```bash
+# Generate 5 random words
+python src/cli/main.py text --type word --count 5
 
-### **CLI**
+# Generate 3 sentences  
+python src/cli/main.py text --type sentence --count 3
 
-`[Provide clear, reproducible command-line examples for each tool.]`
+# Generate 2 paragraphs
+python src/cli/main.py text --type paragraph --count 2
+```
 
-### **API**
+**Generate secure passwords:**
+```bash
+# Basic 16-character password
+python src/cli/main.py password
 
-`The API can be accessed at the following base URL:`
-`http://localhost:5000/api/v1`
+# Custom password with symbols and entropy info
+python src/cli/main.py password --length 20 --symbols --show-entropy
 
-`**Endpoints:**`
+# Exclude ambiguous characters
+python src/cli/main.py password --exclude-ambiguous
+```
 
-  * `**GET /api/v1/text/random**`
-      * `Generates a random text paragraph.`
-  * `**GET /api/v1/password/generate**`
-      * `Generates a strong, random password.`
-  * `**GET /api/v1/apikey/generate**`
-      * `Generates a secure API key.`
+**Generate API keys:**
+```bash
+# Hex format (default)
+python src/cli/main.py apikey
 
-`[Include additional details and examples for how to use each endpoint, e.g., with curl or Postman.]`
+# Base64 with prefix
+python src/cli/main.py apikey --format base64 --prefix "sk_"
 
------
+# Base58 Bitcoin-style
+python src/cli/main.py apikey --format base58 --show-entropy
+```
 
-## **Contributing**
+### API Usage
 
-We welcome contributions from the community\! If you have an idea for a new tool or an improvement, please feel free to open an issue or submit a pull request.
+**Start the server:**
+```bash
+source .venv/bin/activate
+python src/api/app.py
+# Server runs on http://localhost:5600
+```
 
------
+**API Examples:**
 
-## **License**
+**Text Generation:**
+```bash
+# Generate 3 random words
+curl "http://localhost:5600/api/v1/text/random?type=word&count=3"
 
-This project is licensed under the MIT License - see the **[LICENSE](https://www.google.com/search?q=LICENSE)** file for details.
+# Generate a paragraph
+curl "http://localhost:5600/api/v1/text/random?type=paragraph"
+```
+
+**Password Generation:**
+```bash
+# Basic password
+curl "http://localhost:5600/api/v1/password/generate"
+
+# Custom password with symbols
+curl "http://localhost:5600/api/v1/password/generate?length=16&symbols=true&exclude_ambiguous=true"
+```
+
+**API Key Generation:**
+```bash
+# Hex format
+curl "http://localhost:5600/api/v1/apikey/generate"
+
+# Base64 with prefix
+curl "http://localhost:5600/api/v1/apikey/generate?format=base64&prefix=sk_&length=32"
+```
+
+---
+
+## 📡 API Reference
+
+### Base URL
+```
+http://localhost:5600/api/v1
+```
+
+### Response Format
+All endpoints return standardized JSON:
+```json
+{
+  "success": true,
+  "data": {
+    "result": "generated_content",
+    "metadata": { "additional_info": "here" }
+  },
+  "timestamp": "2025-08-30T20:58:30.046507Z"
+}
+```
+
+### Error Format
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human readable message"
+  },
+  "timestamp": "2025-08-30T20:58:30.046507Z"
+}
+```
+
+### Endpoints
+
+| Endpoint | Method | Description | Parameters |
+|----------|--------|-------------|------------|
+| `/health` | GET | Health check | None |
+| `/text/random` | GET | Generate text | `type`, `count` |
+| `/password/generate` | GET | Generate password | `length`, `uppercase`, `lowercase`, `numbers`, `symbols`, `exclude_ambiguous` |
+| `/apikey/generate` | GET | Generate API key | `format`, `length`, `prefix`, `charset` |
+
+---
+
+## 🔧 Development
+
+### Project Structure
+```
+random-toolbox/
+├── src/
+│   ├── cli/main.py              # CLI interface
+│   ├── api/app.py               # REST API server
+│   └── core/generators/         # Core generation logic
+├── tests/                       # Test suite (planned)
+├── requirements.txt             # Python dependencies
+└── Todo.md                      # Task tracking (synced with Linear)
+```
+
+### Security Features
+- **Cryptographic Security**: Uses Python `secrets` module
+- **Entropy Tracking**: Mathematical strength assessment
+- **Input Validation**: Comprehensive parameter checking
+- **Multiple Formats**: Support for various encoding schemes
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit issues or pull requests.
+
+### Development Setup
+1. Fork the repository
+2. Create a virtual environment: `python3 -m venv .venv`
+3. Install dependencies: `pip install -r requirements.txt`
+4. Make your changes
+5. Test thoroughly
+6. Submit a pull request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
