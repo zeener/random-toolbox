@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  random-toolbox:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: random-toolbox-microservice
+    ports:
+      - "5600:5600"
+    environment:
+      - FLASK_ENV=production
+      - PYTHONPATH=/app
+      - PORT=5600
+    volumes:
+      # Optional: Mount logs directory for external access
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5600/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - random-toolbox-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.random-toolbox.rule=Host(`random-toolbox.local`)"
+      - "traefik.http.services.random-toolbox.loadbalancer.server.port=5600"
+
+networks:
+  random-toolbox-network:
+    driver: bridge
+    name: random-toolbox-net
+
+# Optional: Add volume for persistent logs
+volumes:
+  logs:
+    driver: local

@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: random-toolbox
+  labels:
+    app: random-toolbox
+    version: v1.0.0
+    tier: microservice
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: random-toolbox
+  template:
+    metadata:
+      labels:
+        app: random-toolbox
+    spec:
+      containers:
+      - name: random-toolbox
+        image: random-toolbox:latest
+        ports:
+        - containerPort: 5600
+          protocol: TCP
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        - name: PORT
+          value: "5600"
+        - name: PYTHONPATH
+          value: "/app"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 5600
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 5600
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+        - name: logs-volume
+          mountPath: /app/logs
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}
+      - name: logs-volume
+        emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: random-toolbox-service
+  labels:
+    app: random-toolbox
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 5600
+    protocol: TCP
+    name: http
+  selector:
+    app: random-toolbox
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: random-toolbox-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - random-toolbox.yourdomain.com
+    secretName: random-toolbox-tls
+  rules:
+  - host: random-toolbox.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: random-toolbox-service
+            port:
+              number: 80

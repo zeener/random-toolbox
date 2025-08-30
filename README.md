@@ -162,6 +162,71 @@ All endpoints return standardized JSON:
 
 ---
 
+## 🐳 Docker Deployment
+
+### Quick Start with Docker
+
+**Production deployment:**
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Or build manually
+docker build -t random-toolbox .
+docker run -p 5600:5600 random-toolbox
+```
+
+**Development with hot reload:**
+```bash
+# Development environment with mounted volumes
+docker-compose -f docker-compose.dev.yml up
+
+# Run tests in container
+docker-compose -f docker-compose.dev.yml --profile test up random-toolbox-test
+```
+
+### Build Options
+
+**Using the build script (recommended):**
+```bash
+# Production build
+./scripts/docker-build.sh production v1.0.0
+
+# Development build
+./scripts/docker-build.sh development
+```
+
+**Manual builds:**
+```bash
+# Multi-stage production build (optimized)
+docker build -f Dockerfile.multi-stage --target production -t random-toolbox:prod .
+
+# Development build with tests
+docker build -f Dockerfile.multi-stage --target development -t random-toolbox:dev .
+```
+
+### Kubernetes Deployment
+
+**Deploy to Kubernetes:**
+```bash
+# Apply all manifests
+kubectl apply -f kubernetes/
+
+# Check deployment status
+kubectl get pods -l app=random-toolbox
+kubectl get svc random-toolbox-service
+```
+
+**Features:**
+- ✅ **Production-ready containers** with multi-stage builds
+- ✅ **Security hardened** - non-root user, read-only filesystem
+- ✅ **Health checks** and monitoring
+- ✅ **Horizontal Pod Autoscaler** for scaling
+- ✅ **Ingress configuration** for external access
+- ✅ **CI/CD pipeline** with GitHub Actions
+
+---
+
 ## 🔧 Development
 
 ### Project Structure
