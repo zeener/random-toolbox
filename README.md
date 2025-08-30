@@ -35,40 +35,48 @@ pip install -r requirements.txt
 
 ### CLI Usage
 
-**Generate random text:**
+> **Note**: Run CLI commands from the project root directory with the virtual environment activated.
+
+**Method 1 - Python module (recommended):**
 ```bash
 # Generate 5 random words
-python src/cli/main.py text --type word --count 5
+python -m src.cli.main text --type word --count 5
 
 # Generate 3 sentences  
-python src/cli/main.py text --type sentence --count 3
+python -m src.cli.main text --type sentence --count 3
 
 # Generate 2 paragraphs
-python src/cli/main.py text --type paragraph --count 2
+python -m src.cli.main text --type paragraph --count 2
+```
+
+**Method 2 - Direct file execution:**
+```bash
+# Alternative way to run commands
+python src/cli/main.py text --type word --count 5
 ```
 
 **Generate secure passwords:**
 ```bash
 # Basic 16-character password
-python src/cli/main.py password
+python -m src.cli.main password
 
 # Custom password with symbols and entropy info
-python src/cli/main.py password --length 20 --symbols --show-entropy
+python -m src.cli.main password --length 20 --symbols --show-entropy
 
 # Exclude ambiguous characters
-python src/cli/main.py password --exclude-ambiguous
+python -m src.cli.main password --exclude-ambiguous
 ```
 
 **Generate API keys:**
 ```bash
 # Hex format (default)
-python src/cli/main.py apikey
+python -m src.cli.main apikey
 
 # Base64 with prefix
-python src/cli/main.py apikey --format base64 --prefix "sk_"
+python -m src.cli.main apikey --format base64 --prefix "sk_"
 
 # Base58 Bitcoin-style
-python src/cli/main.py apikey --format base58 --show-entropy
+python -m src.cli.main apikey --format base58 --show-entropy
 ```
 
 ### API Usage
@@ -163,7 +171,7 @@ random-toolbox/
 │   ├── cli/main.py              # CLI interface
 │   ├── api/app.py               # REST API server
 │   └── core/generators/         # Core generation logic
-├── tests/                       # Test suite (planned)
+├── tests/                       # Comprehensive test suite (102 tests)
 ├── requirements.txt             # Python dependencies
 └── Todo.md                      # Task tracking (synced with Linear)
 ```
