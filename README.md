@@ -192,8 +192,8 @@ This separation allows you to run both environments simultaneously for testing a
 docker-compose up -d
 
 # Or build manually
-docker build -t random-toolbox .
-docker run -p 5601:5601 random-toolbox
+docker build -t random-toolbox-api .
+docker run -p 5601:5601 random-toolbox-api
 ```
 
 **Development with hot reload:**

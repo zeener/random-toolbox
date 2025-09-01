@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  random-toolbox:
-    build: 
+  random-toolbox-api:
+    build:
       context: .
       dockerfile: Dockerfile
-    container_name: random-toolbox-microservice
+    container_name: random-toolbox-api
     ports:
       - "5601:5601"
     environment:
@@ -26,13 +26,13 @@ services:
       - random-toolbox-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.random-toolbox.rule=Host(`random-toolbox.local`)"
-      - "traefik.http.services.random-toolbox.loadbalancer.server.port=5601"
+      - "traefik.http.routers.random-toolbox-api.rule=Host(`random-toolbox.local`)"
+      - "traefik.http.services.random-toolbox-api.loadbalancer.server.port=5601"
 
 networks:
   random-toolbox-network:
     driver: bridge
-    name: random-toolbox-net
+    name: random-toolbox-network
 
 # Optional: Add volume for persistent logs
 volumes:
