@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from datetime import datetime
 import sys
 import os
@@ -436,6 +436,42 @@ def decode_url():
             "code": "INTERNAL_ERROR",
             "message": "Failed to decode URL"
         }), 500
+
+# API Documentation endpoints
+
+@app.route('/api/swagger.yaml')
+def swagger_spec():
+    """Serve the Swagger specification file."""
+    try:
+        # Get the directory where this script is located
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Go up two levels to reach the project root, then into docs
+        docs_dir = os.path.join(current_dir, '..', '..', 'docs')
+        return send_from_directory(docs_dir, 'api-swagger.yaml')
+    except Exception as e:
+        return jsonify({"error": "Swagger specification not found"}), 404
+
+@app.route('/api')
+def api_info():
+    """API information endpoint."""
+    return create_response({
+        "name": "Random Toolbox API",
+        "version": "1.0.0",
+        "description": "A comprehensive suite of developer tools API",
+        "documentation": "/api/docs",
+        "endpoints": {
+            "health": "/api/v1/health",
+            "text_generation": "/api/v1/text/random",
+            "password_generation": "/api/v1/password/generate",
+            "apikey_generation": "/api/v1/apikey/generate",
+            "hash_generation": "/api/v1/hash/generate",
+            "uuid_generation": "/api/v1/uuid/generate",
+            "base64_encode": "/api/v1/base64/encode",
+            "base64_decode": "/api/v1/base64/decode",
+            "url_encode": "/api/v1/url/encode",
+            "url_decode": "/api/v1/url/decode"
+        }
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5600)

@@ -1,0 +1,763 @@
+openapi: 3.0.3
+info:
+  title: Random Toolbox API
+  description: |
+    A comprehensive suite of developer tools API including password generators, 
+    API key generators, text generators, hash utilities, UUID generators, and more.
+    
+    All endpoints return standardized JSON responses with success/error indicators,
+    data payload, and timestamps.
+  version: 1.0.0
+  contact:
+    name: Random Toolbox API
+    url: https://github.com/your-org/random-toolbox
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5600/api/v1
+    description: Local development server
+  - url: https://api.random-toolbox.com/v1
+    description: Production server
+
+components:
+  schemas:
+    # Common response schemas
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-09-01T10:00:00.000Z"
+      required:
+        - success
+        - timestamp
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "INVALID_PARAMETER"
+            message:
+              type: string
+              example: "Invalid request parameters"
+            details:
+              type: object
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-09-01T10:00:00.000Z"
+      required:
+        - success
+        - error
+        - timestamp
+
+    # Health check response
+    HealthData:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        version:
+          type: string
+          example: "1.0.0"
+
+    # Text generation schemas
+    TextData:
+      type: object
+      properties:
+        result:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        metadata:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [word, sentence, paragraph]
+            count:
+              type: integer
+            is_array:
+              type: boolean
+
+    # Password generation schemas
+    PasswordData:
+      type: object
+      properties:
+        password:
+          type: string
+          example: "Kx9#mP2$vL8@"
+        metadata:
+          type: object
+          properties:
+            length:
+              type: integer
+              example: 12
+            entropy_bits:
+              type: number
+              example: 79.2
+            strength:
+              type: string
+              example: "Very Strong"
+            config:
+              type: object
+              properties:
+                uppercase:
+                  type: boolean
+                lowercase:
+                  type: boolean
+                numbers:
+                  type: boolean
+                symbols:
+                  type: boolean
+                exclude_ambiguous:
+                  type: boolean
+
+    # API Key generation schemas
+    APIKeyData:
+      type: object
+      properties:
+        api_key:
+          type: string
+          example: "sk_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+        metadata:
+          type: object
+          properties:
+            format:
+              type: string
+              enum: [hex, base64, base58, custom]
+            length:
+              type: integer
+            total_length:
+              type: integer
+            prefix:
+              type: string
+            entropy_bits:
+              type: number
+            security_level:
+              type: string
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Check if the API service is healthy and running
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/HealthData'
+
+  /text/random:
+    get:
+      summary: Generate Random Text
+      description: Generate random words, sentences, or paragraphs
+      tags:
+        - Text Generation
+      parameters:
+        - name: type
+          in: query
+          description: Type of text to generate
+          required: false
+          schema:
+            type: string
+            enum: [word, sentence, paragraph]
+            default: paragraph
+        - name: count
+          in: query
+          description: Number of items to generate
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 1
+      responses:
+        '200':
+          description: Text generated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TextData'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /password/generate:
+    get:
+      summary: Generate Password
+      description: Generate a secure password with customizable options
+      tags:
+        - Password Generation
+      parameters:
+        - name: length
+          in: query
+          description: Password length
+          required: false
+          schema:
+            type: integer
+            minimum: 8
+            maximum: 128
+            default: 16
+        - name: uppercase
+          in: query
+          description: Include uppercase letters
+          required: false
+          schema:
+            type: boolean
+            default: true
+        - name: lowercase
+          in: query
+          description: Include lowercase letters
+          required: false
+          schema:
+            type: boolean
+            default: true
+        - name: numbers
+          in: query
+          description: Include numbers
+          required: false
+          schema:
+            type: boolean
+            default: true
+        - name: symbols
+          in: query
+          description: Include symbols
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: exclude_ambiguous
+          in: query
+          description: Exclude ambiguous characters (0, O, l, I, etc.)
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Password generated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PasswordData'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /apikey/generate:
+    get:
+      summary: Generate API Key
+      description: Generate a secure API key in various formats
+      tags:
+        - API Key Generation
+      parameters:
+        - name: format
+          in: query
+          description: API key format
+          required: false
+          schema:
+            type: string
+            enum: [hex, base64, base58, custom]
+            default: hex
+        - name: length
+          in: query
+          description: Key length (in bytes for hex/base64, characters for others)
+          required: false
+          schema:
+            type: integer
+            minimum: 16
+            maximum: 128
+            default: 32
+        - name: prefix
+          in: query
+          description: Prefix to add to the generated key
+          required: false
+          schema:
+            type: string
+            maxLength: 20
+        - name: charset
+          in: query
+          description: Custom character set (only for custom format)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: API key generated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/APIKeyData'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /hash/generate:
+    get:
+      summary: Generate Hash
+      description: Generate hash for given text using various algorithms
+      tags:
+        - Hash Generation
+      parameters:
+        - name: text
+          in: query
+          description: Text to hash
+          required: true
+          schema:
+            type: string
+        - name: algorithm
+          in: query
+          description: Hash algorithm to use
+          required: false
+          schema:
+            type: string
+            enum: [md5, sha1, sha256, sha512, blake2b, blake2s]
+            default: sha256
+      responses:
+        '200':
+          description: Hash generated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          hash:
+                            type: string
+                          metadata:
+                            type: object
+                            properties:
+                              algorithm:
+                                type: string
+                              input_length:
+                                type: integer
+                              hash_length:
+                                type: integer
+                              encoding:
+                                type: string
+        '400':
+          description: Invalid parameters or missing text
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /hash/algorithms:
+    get:
+      summary: Get Supported Hash Algorithms
+      description: Get list of supported hash algorithms
+      tags:
+        - Hash Generation
+      responses:
+        '200':
+          description: Algorithms retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          algorithms:
+                            type: array
+                            items:
+                              type: string
+                          count:
+                            type: integer
+
+  /uuid/generate:
+    get:
+      summary: Generate UUID
+      description: Generate UUID of specified version
+      tags:
+        - UUID Generation
+      parameters:
+        - name: version
+          in: query
+          description: UUID version to generate
+          required: false
+          schema:
+            type: string
+            enum: [v1, v4]
+            default: v4
+      responses:
+        '200':
+          description: UUID generated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          uuid:
+                            type: string
+                            format: uuid
+                          metadata:
+                            type: object
+                            properties:
+                              version:
+                                type: string
+                              type:
+                                type: string
+                              description:
+                                type: string
+                              length:
+                                type: integer
+                              format:
+                                type: string
+        '400':
+          description: Invalid UUID version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /uuid/validate:
+    get:
+      summary: Validate UUID
+      description: Validate if a string is a valid UUID
+      tags:
+        - UUID Generation
+      parameters:
+        - name: uuid
+          in: query
+          description: UUID string to validate
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: UUID validation result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          is_valid:
+                            type: boolean
+                          version:
+                            type: string
+                            nullable: true
+                          variant:
+                            type: string
+                            nullable: true
+        '400':
+          description: Missing UUID parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /base64/encode:
+    post:
+      summary: Encode Text to Base64
+      description: Encode plain text to Base64 format
+      tags:
+        - Base64 Utilities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: Text to encode
+              required:
+                - text
+            example:
+              text: "Hello, World!"
+      responses:
+        '200':
+          description: Text encoded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          encoded:
+                            type: string
+                          metadata:
+                            type: object
+                            properties:
+                              original_length:
+                                type: integer
+                              encoded_length:
+                                type: integer
+                              size_increase_percent:
+                                type: number
+                              padding_chars:
+                                type: integer
+        '400':
+          description: Missing text parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /base64/decode:
+    post:
+      summary: Decode Base64 to Text
+      description: Decode Base64 encoded text back to plain text
+      tags:
+        - Base64 Utilities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                encoded:
+                  type: string
+                  description: Base64 encoded text to decode
+              required:
+                - encoded
+            example:
+              encoded: "SGVsbG8sIFdvcmxkIQ=="
+      responses:
+        '200':
+          description: Text decoded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          decoded:
+                            type: string
+                          metadata:
+                            type: object
+                            properties:
+                              encoded_length:
+                                type: integer
+                              decoded_length:
+                                type: integer
+                              size_decrease_percent:
+                                type: number
+                              padding_chars:
+                                type: integer
+        '400':
+          description: Missing encoded parameter or invalid Base64
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /url/encode:
+    post:
+      summary: Encode Text for URL
+      description: Encode text for safe usage in URLs
+      tags:
+        - URL Utilities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: Text to URL encode
+                type:
+                  type: string
+                  enum: [standard, component]
+                  default: standard
+                  description: Type of URL encoding
+              required:
+                - text
+            example:
+              text: "Hello World & More!"
+              type: "standard"
+      responses:
+        '200':
+          description: Text encoded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          encoded:
+                            type: string
+                          metadata:
+                            type: object
+                            properties:
+                              encoding_type:
+                                type: string
+                              original_length:
+                                type: integer
+                              encoded_length:
+                                type: integer
+                              size_increase_percent:
+                                type: number
+                              characters_encoded:
+                                type: integer
+        '400':
+          description: Missing text parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /url/decode:
+    post:
+      summary: Decode URL Encoded Text
+      description: Decode URL encoded text back to plain text
+      tags:
+        - URL Utilities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                encoded:
+                  type: string
+                  description: URL encoded text to decode
+                type:
+                  type: string
+                  enum: [standard, component]
+                  default: standard
+                  description: Type of URL decoding
+              required:
+                - encoded
+            example:
+              encoded: "Hello%20World%20%26%20More%21"
+              type: "standard"
+      responses:
+        '200':
+          description: Text decoded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          decoded:
+                            type: string
+                          metadata:
+                            type: object
+                            properties:
+                              encoding_type:
+                                type: string
+                              encoded_length:
+                                type: integer
+                              decoded_length:
+                                type: integer
+                              size_decrease_percent:
+                                type: number
+                              characters_decoded:
+                                type: integer
+        '400':
+          description: Missing encoded parameter or invalid URL encoding
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+tags:
+  - name: System
+    description: System health and status endpoints
+  - name: Text Generation
+    description: Random text generation utilities
+  - name: Password Generation
+    description: Secure password generation tools
+  - name: API Key Generation
+    description: API key generation utilities
+  - name: Hash Generation
+    description: Hash generation and verification tools
+  - name: UUID Generation
+    description: UUID generation and validation utilities
+  - name: Base64 Utilities
+    description: Base64 encoding and decoding tools
+  - name: URL Utilities
+    description: URL encoding and decoding utilities
