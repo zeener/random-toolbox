@@ -12,7 +12,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH="/app" \
     FLASK_APP=src.api.app \
     FLASK_ENV=production \
-    PORT=5600
+    PORT=5601
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
@@ -53,4 +53,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 EXPOSE ${PORT}
 
 # Run the application
-CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5600"]
+CMD ["sh", "-c", "python -m flask run --host=0.0.0.0 --port=${PORT}"]

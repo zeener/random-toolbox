@@ -85,7 +85,7 @@ python -m src.cli.main apikey --format base58 --show-entropy
 ```bash
 source .venv/bin/activate
 python src/api/app.py
-# Server runs on http://localhost:5600
+# Development server runs on http://localhost:5600
 ```
 
 **API Examples:**
@@ -122,8 +122,14 @@ curl "http://localhost:5600/api/v1/apikey/generate?format=base64&prefix=sk_&leng
 ## 📡 API Reference
 
 ### Base URL
+**Development Environment:**
 ```
 http://localhost:5600/api/v1
+```
+
+**Docker Environment:**
+```
+http://localhost:5601/api/v1
 ```
 
 ### Response Format
@@ -162,18 +168,32 @@ All endpoints return standardized JSON:
 
 ---
 
+## 🌐 Environment Configuration
+
+### Port Configuration
+The Random Toolbox API uses different ports for different environments:
+
+| Environment | Port | URL | Purpose |
+|-------------|------|-----|---------|
+| **Development** | 5600 | `http://localhost:5600` | Local Python development server |
+| **Docker** | 5601 | `http://localhost:5601` | Containerized production environment |
+
+This separation allows you to run both environments simultaneously for testing and development.
+
+---
+
 ## 🐳 Docker Deployment
 
 ### Quick Start with Docker
 
 **Production deployment:**
 ```bash
-# Build and run with Docker Compose
+# Build and run with Docker Compose (Production - Port 5601)
 docker-compose up -d
 
 # Or build manually
 docker build -t random-toolbox .
-docker run -p 5600:5600 random-toolbox
+docker run -p 5601:5601 random-toolbox
 ```
 
 **Development with hot reload:**
