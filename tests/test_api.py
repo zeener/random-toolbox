@@ -285,11 +285,278 @@ class TestAPI:
         # Test text endpoint edge cases
         response = self.app.get('/api/v1/text/random?count=1001')
         assert response.status_code == 400
-        
-        # Test password endpoint edge cases  
+
+        # Test password endpoint edge cases
         response = self.app.get('/api/v1/password/generate?length=7')
         assert response.status_code == 400
-        
+
         # Test API key endpoint edge cases
         response = self.app.get('/api/v1/apikey/generate?length=150')
         assert response.status_code == 400
+
+    # Hash Generation Tests
+    def test_hash_endpoint_default(self):
+        """Test hash endpoint with default parameters."""
+        response = self.app.get('/api/v1/hash/generate?text=hello%20world')
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["success"] is True
+        assert "data" in data
+        assert "hash" in data["data"]
+        assert "metadata" in data["data"]
+
+        metadata = data["data"]["metadata"]
+        assert metadata["algorithm"] == "sha256"
+        assert metadata["input_length"] == 11
+        assert metadata["hash_length"] == 64
+        assert metadata["encoding"] == "utf-8"
+
+    def test_hash_endpoint_md5(self):
+        """Test hash endpoint with MD5 algorithm."""
+        response = self.app.get('/api/v1/hash/generate?text=test&algorithm=md5')
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["data"]["metadata"]["algorithm"] == "md5"
+        assert data["data"]["metadata"]["hash_length"] == 32
+        assert data["data"]["hash"] == "098f6bcd4621d373cade4e832627b4f6"
+
+    def test_hash_endpoint_missing_text(self):
+        """Test hash endpoint with missing text parameter."""
+        response = self.app.get('/api/v1/hash/generate')
+        assert response.status_code == 400
+
+        data = json.loads(response.data)
+        assert data["success"] is False
+        assert data["error"]["code"] == "MISSING_TEXT"
+
+    def test_hash_endpoint_invalid_algorithm(self):
+        """Test hash endpoint with invalid algorithm."""
+        response = self.app.get('/api/v1/hash/generate?text=test&algorithm=invalid')
+        assert response.status_code == 400
+
+        data = json.loads(response.data)
+        assert data["success"] is False
+        assert data["error"]["code"] == "INVALID_PARAMETER"
+
+    # UUID Generation Tests
+    def test_uuid_endpoint_default(self):
+        """Test UUID endpoint with default parameters."""
+        response = self.app.get('/api/v1/uuid/generate')
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["success"] is True
+        assert "data" in data
+        assert "uuid" in data["data"]
+        assert "metadata" in data["data"]
+
+        metadata = data["data"]["metadata"]
+        assert metadata["version"] == "V4"
+        assert metadata["type"] == "Random UUID"
+        assert metadata["length"] == 36
+        assert metadata["format"] == "8-4-4-4-12 hexadecimal digits"
+
+    def test_uuid_endpoint_v1(self):
+        """Test UUID endpoint with v1 version."""
+        response = self.app.get('/api/v1/uuid/generate?version=v1')
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["data"]["metadata"]["version"] == "V1"
+        assert data["data"]["metadata"]["type"] == "Time-based UUID"
+
+    def test_uuid_endpoint_invalid_version(self):
+        """Test UUID endpoint with invalid version."""
+        response = self.app.get('/api/v1/uuid/generate?version=v5')
+        assert response.status_code == 400
+
+        data = json.loads(response.data)
+        assert data["success"] is False
+        assert data["error"]["code"] == "INVALID_PARAMETER"
+
+    # UUID Validation Tests
+    def test_uuid_validate_endpoint_valid(self):
+        """Test UUID validation endpoint with valid UUID."""
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+        response = self.app.get(f'/api/v1/uuid/validate?uuid={valid_uuid}')
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["success"] is True
+        assert data["data"]["is_valid"] is True
+        assert data["data"]["uuid"] == valid_uuid
+
+    def test_uuid_validate_endpoint_invalid(self):
+        """Test UUID validation endpoint with invalid UUID."""
+        invalid_uuid = "invalid-uuid-format"
+        response = self.app.get(f'/api/v1/uuid/validate?uuid={invalid_uuid}')
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["success"] is True
+        assert data["data"]["is_valid"] is False
+        assert "error" in data["data"]
+        assert "suggestions" in data["data"]
+
+    def test_uuid_validate_endpoint_missing_uuid(self):
+        """Test UUID validation endpoint with missing UUID parameter."""
+        response = self.app.get('/api/v1/uuid/validate')
+        assert response.status_code == 400
+
+        data = json.loads(response.data)
+        assert data["success"] is False
+        assert data["error"]["code"] == "MISSING_UUID"
+
+    # Base64 Encoding Tests
+    def test_base64_encode_endpoint(self):
+        """Test Base64 encoding endpoint."""
+        payload = {"text": "Hello World!"}
+        response = self.app.post('/api/v1/base64/encode',
+                               json=payload,
+                               content_type='application/json')
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["success"] is True
+        assert "data" in data
+        assert "encoded" in data["data"]
+        assert "metadata" in data["data"]
+
+        assert data["data"]["encoded"] == "SGVsbG8gV29ybGQh"
+        metadata = data["data"]["metadata"]
+        assert metadata["original_length"] == 12
+        assert metadata["encoded_length"] == 16
+        assert metadata["padding_chars"] == 0
+
+    def test_base64_encode_endpoint_missing_text(self):
+        """Test Base64 encoding endpoint with missing text."""
+        payload = {}
+        response = self.app.post('/api/v1/base64/encode',
+                               json=payload,
+                               content_type='application/json')
+        assert response.status_code == 400
+
+        data = json.loads(response.data)
+        assert data["success"] is False
+        assert data["error"]["code"] == "MISSING_TEXT"
+
+    def test_base64_encode_endpoint_invalid_json(self):
+        """Test Base64 encoding endpoint with invalid JSON."""
+        response = self.app.post('/api/v1/base64/encode',
+                               data="invalid json",
+                               content_type='application/json')
+        assert response.status_code == 500  # Flask returns 500 for invalid JSON
+
+    # Base64 Decoding Tests
+    def test_base64_decode_endpoint(self):
+        """Test Base64 decoding endpoint."""
+        payload = {"encoded": "SGVsbG8gV29ybGQh"}
+        response = self.app.post('/api/v1/base64/decode',
+                               json=payload,
+                               content_type='application/json')
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["success"] is True
+        assert "data" in data
+        assert "decoded" in data["data"]
+        assert "metadata" in data["data"]
+
+        assert data["data"]["decoded"] == "Hello World!"
+        metadata = data["data"]["metadata"]
+        assert metadata["decoded_length"] == 12
+        assert metadata["encoded_length"] == 16
+
+    def test_base64_decode_endpoint_invalid_base64(self):
+        """Test Base64 decoding endpoint with invalid Base64."""
+        payload = {"encoded": "Invalid!@#$"}
+        response = self.app.post('/api/v1/base64/decode',
+                               json=payload,
+                               content_type='application/json')
+        assert response.status_code == 400
+
+        data = json.loads(response.data)
+        assert data["success"] is False
+        assert data["error"]["code"] == "DECODING_ERROR"
+
+    # URL Encoding Tests
+    def test_url_encode_endpoint(self):
+        """Test URL encoding endpoint."""
+        payload = {"text": "Hello World! @#$%", "type": "standard"}
+        response = self.app.post('/api/v1/url/encode',
+                               json=payload,
+                               content_type='application/json')
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["success"] is True
+        assert "data" in data
+        assert "encoded" in data["data"]
+        assert "metadata" in data["data"]
+
+        assert data["data"]["encoded"] == "Hello%20World%21%20%40%23%24%25"
+        metadata = data["data"]["metadata"]
+        assert metadata["encoding_type"] == "standard"
+        assert metadata["original_length"] == 17
+        assert metadata["characters_encoded"] == 7
+
+    def test_url_encode_endpoint_plus_type(self):
+        """Test URL encoding endpoint with plus type."""
+        payload = {"text": "Hello World!", "type": "plus"}
+        response = self.app.post('/api/v1/url/encode',
+                               json=payload,
+                               content_type='application/json')
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["data"]["metadata"]["encoding_type"] == "plus"
+        # Plus encoding should have + instead of %20 for spaces
+        assert "+" in data["data"]["encoded"]
+        assert "%20" not in data["data"]["encoded"]
+
+    def test_url_encode_endpoint_missing_text(self):
+        """Test URL encoding endpoint with missing text."""
+        payload = {"type": "standard"}
+        response = self.app.post('/api/v1/url/encode',
+                               json=payload,
+                               content_type='application/json')
+        assert response.status_code == 400
+
+        data = json.loads(response.data)
+        assert data["success"] is False
+        assert data["error"]["code"] == "MISSING_TEXT"
+
+    # URL Decoding Tests
+    def test_url_decode_endpoint(self):
+        """Test URL decoding endpoint."""
+        payload = {"encoded": "Hello%20World%21%20%40%23%24%25"}
+        response = self.app.post('/api/v1/url/decode',
+                               json=payload,
+                               content_type='application/json')
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["success"] is True
+        assert "data" in data
+        assert "decoded" in data["data"]
+        assert "metadata" in data["data"]
+
+        assert data["data"]["decoded"] == "Hello World! @#$%"
+        metadata = data["data"]["metadata"]
+        assert metadata["decoding_type"] == "standard"
+        assert metadata["decoded_length"] == 17
+        assert metadata["characters_decoded"] == 7
+
+    def test_url_decode_endpoint_plus_type(self):
+        """Test URL decoding endpoint with plus type."""
+        payload = {"encoded": "Hello+World%21", "type": "plus"}
+        response = self.app.post('/api/v1/url/decode',
+                               json=payload,
+                               content_type='application/json')
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+        assert data["data"]["decoded"] == "Hello World!"
+        assert data["data"]["metadata"]["decoding_type"] == "plus"
