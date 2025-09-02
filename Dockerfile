@@ -12,7 +12,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH="/app" \
     FLASK_APP=src.api.app \
     FLASK_ENV=production \
-    PORT=5601
+    PORT=8002
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser

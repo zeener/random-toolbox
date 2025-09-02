@@ -7,17 +7,17 @@ services:
       dockerfile: Dockerfile
     container_name: random-toolbox-api
     ports:
-      - "5601:5601"
+      - "8002:8002"
     environment:
       - FLASK_ENV=production
       - PYTHONPATH=/app
-      - PORT=5601
+      - PORT=8002
     volumes:
       # Optional: Mount logs directory for external access
       - ./logs:/app/logs
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5601/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -27,7 +27,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.random-toolbox-api.rule=Host(`random-toolbox.local`)"
-      - "traefik.http.services.random-toolbox-api.loadbalancer.server.port=5601"
+      - "traefik.http.services.random-toolbox-api.loadbalancer.server.port=8002"
 
 networks:
   random-toolbox-network:
